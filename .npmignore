@@ -1,8 +1,13 @@
-*.git
-.git
-node_modules
-test
-.gitignore
-.npmrc
-npm-debug.log
-.npmignore
+# Ignore .ts files and allow .d.ts files
+*.ts
+!*.d.ts
+
+# IDE
+.idea
+.vscode
+
+# only publish build
+src
+.babelrc
+
+

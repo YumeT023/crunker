@@ -10,31 +10,33 @@
     <button onclick="handleConcat()">Concat</button>
 
     <script type="module">
-      import Crunker from 'https://unpkg.com/crunker@latest/dist/crunker.esm.js';
+      import Crunker from "https://unpkg.com/crunker@latest/dist/crunker.esm.js";
 
       const sampleRate = 48000,
-        audioPaths = ['./1.mp3', './2.mp3'];
+        audioPaths = ["./1.mp3", "./2.mp3"];
 
       function handleMerge() {
-        doTheWork('mergeAudio', 'merge');
+        doTheWork("mergeAudio", "merge");
       }
 
       function handleConcat() {
-        doTheWork('concatAudio', 'concat');
+        doTheWork("concatAudio", "concat");
       }
 
       async function doTheWork(task, filename) {
         const crunker = new Crunker.default({ sampleRate });
         const buffers = await crunker.fetchAudio(...audioPaths);
         const merged = await crunker[task](buffers);
-        const output = await crunker.export(merged, 'audio/mp3');
+        const output = await crunker.export(merged, "audio/mp3");
         await crunker.download(output.blob, filename);
       }
 
       new Crunker.default().notSupported(() => {
-        window.alert('Browser unsupported!');
+        window.alert("Browser unsupported!");
 
-        Array.from(document.querySelectorAll('input[type=button]')).forEach((elem) => (elem.disabled = true));
+        Array.from(document.querySelectorAll("input[type=button]")).forEach(
+          (elem) => (elem.disabled = true)
+        );
       });
     </script>
   </body>

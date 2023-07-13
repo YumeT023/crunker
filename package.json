@@ -1,46 +1,37 @@
 {
-  "name": "crunker",
+  "name": "@yumii.saiko/crunker",
   "version": "2.1.0",
-  "description": "Simple way to merge or concatenate audio files with the Web Audio API.",
+  "description": "A Fork of crunker which is a Simple way to merge or concatenate audio files with the Web Audio API.",
   "main": "dist/crunker.js",
   "types": "dist/crunker.d.ts",
-  "directories": {
-    "test": "test",
-    "src": "src"
-  },
   "scripts": {
     "type-check": "tsc --noEmit",
-    "type-check:watch": "yarn run type-check -- --watch",
-    "build": "yarn run build:prod && yarn run build:types",
+    "type-check:watch": "npm run type-check -- --watch",
+    "build": "npm run build:prod && yarn run build:types",
     "build:test": "webpack --config webpack.test.config.js --mode development",
-    "build:prod": "yarn run build:prod:cjs && yarn run build:prod:esm",
+    "build:prod": "npm run build:prod:cjs && yarn run build:prod:esm",
     "build:prod:cjs": "webpack --config webpack.config.js --mode production",
     "build:prod:esm": "webpack --config webpack.esm.config.js --mode production",
     "build:types": "tsc --emitDeclarationOnly",
-    "prepublishOnly": "yarn run build",
+    "prepublishOnly": "npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "NODE_ENV=development yarn run build:test && karma start --single-run --browsers ChromeHeadless karma.conf.js "
+    "test": "npm run build:test && karma start --single-run --browsers ChromeHeadless karma.conf.js "
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jaggad/crunker.git"
+    "url": "git+https://github.com/jaggad/crunker"
   },
   "keywords": [
     "web-audio-api",
     "es6",
     "merge",
-    "concatenate",
-    "append",
-    "export",
-    "download"
+    "concatenate"
   ],
   "author": "Jack Edgson",
   "license": "MIT",
   "files": [
-    "LICENSE"
-    "README.md",
-    "dist",
+    "dist"
   ],
   "bugs": {
     "url": "https://github.com/jaggad/crunker/issues"
@@ -66,7 +57,7 @@
     "webpack-cli": "^5.0.1"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org"
-  },
-  "packageManager": "yarn@3.3.1"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  }
 }

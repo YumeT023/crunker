@@ -4,19 +4,10 @@ export interface CrunkerConstructorOptions {
    *
    * @default 44100
    */
-  sampleRate: number;
+  sampleRate?: number;
 }
 
-export type CrunkerInputTypes = string | File | Blob;
-
-/**
- * An exported Crunker audio object.
- */
-export interface ExportedCrunkerAudio {
-  blob: Blob;
-  url: string;
-  element: HTMLAudioElement;
-}
+export type CrunkerInputType = string | File | Blob;
 
 /**
  * Crunker is the simple way to merge, concatenate, play, export and download audio files using the Web Audio API.
@@ -31,12 +22,12 @@ export default class Crunker {
    * If `sampleRate` is not defined, it will auto-select an appropriate sample rate
    * for the device being used.
    */
-  constructor({ sampleRate }: Partial<CrunkerConstructorOptions> = {}) {
+  constructor(options: CrunkerConstructorOptions = {}) {
     this._context = this._createContext();
 
-    sampleRate ||= this._context.sampleRate;
+    options.sampleRate ||= this._context.sampleRate;
 
-    this._sampleRate = sampleRate;
+    this._sampleRate = options.sampleRate;
   }
 
   /**
@@ -45,7 +36,10 @@ export default class Crunker {
    * @internal
    */
   private _createContext(): AudioContext {
-    window.AudioContext = window.AudioContext || (window as any).webkitAudioContext || (window as any).mozAudioContext;
+    window.AudioContext =
+      window.AudioContext ||
+      (window as any).webkitAudioContext ||
+      (window as any).mozAudioContext;
     return new AudioContext();
   }
 
@@ -60,27 +54,23 @@ export default class Crunker {
   /**
    * Asynchronously fetches multiple audio files and returns an array of AudioBuffers.
    */
-  async fetchAudio(...filepaths: CrunkerInputTypes[]): Promise<AudioBuffer[]> {
+  async fetchAudio(...sources: CrunkerInputType[]): Promise<AudioBuffer[]> {
     return await Promise.all(
-      filepaths.map(async (filepath) => {
+      sources.map(async (source) => {
         let buffer: ArrayBuffer;
-
-        if (filepath instanceof File || filepath instanceof Blob) {
-          buffer = await filepath.arrayBuffer();
+        if (source instanceof File || source instanceof Blob) {
+          buffer = await source.arrayBuffer();
         } else {
-          buffer = await fetch(filepath).then((response) => {
+          buffer = await fetch(source).then((response) => {
             if (response.headers.has('Content-Type') && !response.headers.get('Content-Type')!.includes('audio/')) {
               console.warn(
-                `Crunker: Attempted to fetch an audio file, but its MIME type is \`${
-                  response.headers.get('Content-Type')!.split(';')[0]
-                }\`. We'll try and continue anyway. (file: "${filepath}")`
+                `Crunker: Attempted to fetch an audio file, but its MIME type is \`${response.headers.get('Content-Type')!.split(';')[0]
+                }\`. We'll try and continue anyway. (file: "${source}")`
               );
             }
-
             return response.arrayBuffer();
           });
         }
-
         return await this._context.decodeAudioData(buffer);
       })
     );
@@ -101,11 +91,19 @@ export default class Crunker {
     );
 
     buffers.forEach((buffer) => {
-      for (let channelNumber = 0; channelNumber < buffer.numberOfChannels; channelNumber++) {
+      for (
+        let channelNumber = 0;
+        channelNumber < buffer.numberOfChannels;
+        channelNumber++
+      ) {
         const outputData = output.getChannelData(channelNumber);
         const bufferData = buffer.getChannelData(channelNumber);
 
-        for (let i = buffer.getChannelData(channelNumber).length - 1; i >= 0; i--) {
+        for (
+          let i = buffer.getChannelData(channelNumber).length - 1;
+          i >= 0;
+          i--
+        ) {
           outputData[i] += bufferData[i];
         }
 
@@ -132,8 +130,14 @@ export default class Crunker {
     let offset = 0;
 
     buffers.forEach((buffer) => {
-      for (let channelNumber = 0; channelNumber < buffer.numberOfChannels; channelNumber++) {
-        output.getChannelData(channelNumber).set(buffer.getChannelData(channelNumber), offset);
+      for (
+        let channelNumber = 0;
+        channelNumber < buffer.numberOfChannels;
+        channelNumber++
+      ) {
+        output
+          .getChannelData(channelNumber)
+          .set(buffer.getChannelData(channelNumber), offset);
       }
 
       offset += buffer.length;
@@ -152,11 +156,21 @@ export default class Crunker {
    * @param padStart Time to start padding (in seconds)
    * @param seconds Duration to pad for (in seconds)
    */
-  padAudio(buffer: AudioBuffer, padStart: number = 0, seconds: number = 0): AudioBuffer {
+  padAudio(
+    buffer: AudioBuffer,
+    padStart: number = 0,
+    seconds: number = 0
+  ): AudioBuffer {
     if (seconds === 0) return buffer;
 
-    if (padStart < 0) throw new Error('Crunker: Parameter "padStart" in padAudio must be positive');
-    if (seconds < 0) throw new Error('Crunker: Parameter "seconds" in padAudio must be positive');
+    if (padStart < 0)
+      throw new Error(
+        'Crunker: Parameter "padStart" in padAudio must be positive'
+      );
+    if (seconds < 0)
+      throw new Error(
+        'Crunker: Parameter "seconds" in padAudio must be positive'
+      );
 
     const updatedBuffer = this._context.createBuffer(
       buffer.numberOfChannels,
@@ -164,73 +178,31 @@ export default class Crunker {
       buffer.sampleRate
     );
 
-    for (let channelNumber = 0; channelNumber < buffer.numberOfChannels; channelNumber++) {
+    for (
+      let channelNumber = 0;
+      channelNumber < buffer.numberOfChannels;
+      channelNumber++
+    ) {
       const channelData = buffer.getChannelData(channelNumber);
       updatedBuffer
         .getChannelData(channelNumber)
-        .set(channelData.subarray(0, Math.ceil(padStart * buffer.sampleRate) + 1), 0);
+        .set(
+          channelData.subarray(0, Math.ceil(padStart * buffer.sampleRate) + 1),
+          0
+        );
 
       updatedBuffer
         .getChannelData(channelNumber)
         .set(
-          channelData.subarray(Math.ceil(padStart * buffer.sampleRate) + 2, updatedBuffer.length + 1),
+          channelData.subarray(
+            Math.ceil(padStart * buffer.sampleRate) + 2,
+            updatedBuffer.length + 1
+          ),
           Math.ceil((padStart + seconds) * buffer.sampleRate)
         );
     }
 
     return updatedBuffer;
-  }
-
-  /**
-   * Plays the provided AudioBuffer in an AudioBufferSourceNode.
-   */
-  play(buffer: AudioBuffer): AudioBufferSourceNode {
-    const source = this._context.createBufferSource();
-
-    source.buffer = buffer;
-    source.connect(this._context.destination);
-    source.start();
-
-    return source;
-  }
-
-  /**
-   * Exports the specified AudioBuffer to a Blob, Object URI and HTMLAudioElement.
-   *
-   * Note that changing the MIME type does not change the actual file format. The
-   * file format will **always** be a WAVE file due to how audio is stored in the
-   * browser.
-   *
-   * @param buffer Buffer to export
-   * @param type MIME type (default: `audio/wav`)
-   */
-  export(buffer: AudioBuffer, type: string = 'audio/wav'): ExportedCrunkerAudio {
-    const recorded = this._interleave(buffer);
-    const dataview = this._writeHeaders(recorded, buffer.numberOfChannels, buffer.sampleRate);
-    const audioBlob = new Blob([dataview], { type });
-
-    return {
-      blob: audioBlob,
-      url: this._renderURL(audioBlob),
-      element: this._renderAudioElement(audioBlob),
-    };
-  }
-
-  /**
-   * Downloads the provided Blob.
-   *
-   * @param blob Blob to download
-   * @param filename An optional file name to use for the download (default: `crunker`)
-   */
-  download(blob: Blob, filename: string = 'crunker'): HTMLAnchorElement {
-    const a = document.createElement('a');
-
-    a.style.display = 'none';
-    a.href = this._renderURL(blob);
-    a.download = `${filename}.${blob.type.split('/')[1]}`;
-    a.click();
-
-    return a;
   }
 
   /**
@@ -285,7 +257,11 @@ export default class Crunker {
    * @internal
    */
   private _isSupported(): boolean {
-    return 'AudioContext' in window || 'webkitAudioContext' in window || 'mozAudioContext' in window;
+    return (
+      "AudioContext" in window ||
+      "webkitAudioContext" in window ||
+      "mozAudioContext" in window
+    );
   }
 
   /**
@@ -295,7 +271,11 @@ export default class Crunker {
    *
    * @internal
    */
-  private _writeHeaders(buffer: Float32Array, numOfChannels: number, sampleRate: number): DataView {
+  private _writeHeaders(
+    buffer: Float32Array,
+    numOfChannels: number,
+    sampleRate: number
+  ): DataView {
     const bitDepth = 16;
     const bytesPerSample = bitDepth / 8;
     const sampleSize = numOfChannels * bytesPerSample;
@@ -308,10 +288,10 @@ export default class Crunker {
     const arrayBuffer = new ArrayBuffer(fileHeaderSize + chunkTotalSize);
     const view = new DataView(arrayBuffer);
 
-    this._writeString(view, 0, 'RIFF');
+    this._writeString(view, 0, "RIFF");
     view.setUint32(4, chunkTotalSize, true);
-    this._writeString(view, 8, 'WAVE');
-    this._writeString(view, 12, 'fmt ');
+    this._writeString(view, 8, "WAVE");
+    this._writeString(view, 12, "fmt ");
     view.setUint32(16, 16, true);
     view.setUint16(20, 1, true);
     view.setUint16(22, numOfChannels, true);
@@ -319,10 +299,14 @@ export default class Crunker {
     view.setUint32(28, sampleRate * sampleSize, true);
     view.setUint16(32, sampleSize, true);
     view.setUint16(34, bitDepth, true);
-    this._writeString(view, 36, 'data');
+    this._writeString(view, 36, "data");
     view.setUint32(40, chunkDataSize, true);
 
-    return this._floatTo16BitPCM(view, buffer, fileHeaderSize + chunkHeaderSize);
+    return this._floatTo16BitPCM(
+      view,
+      buffer,
+      fileHeaderSize + chunkHeaderSize
+    );
   }
 
   /**
@@ -330,7 +314,11 @@ export default class Crunker {
    *
    * @internal
    */
-  private _floatTo16BitPCM(dataview: DataView, buffer: Float32Array, offset: number): DataView {
+  private _floatTo16BitPCM(
+    dataview: DataView,
+    buffer: Float32Array,
+    offset: number
+  ): DataView {
     for (let i = 0; i < buffer.length; i++, offset += 2) {
       const tmp = Math.max(-1, Math.min(1, buffer[i]));
       dataview.setInt16(offset, tmp < 0 ? tmp * 0x8000 : tmp * 0x7fff, true);
@@ -344,7 +332,11 @@ export default class Crunker {
    *
    * @internal
    */
-  private _writeString(dataview: DataView, offset: number, header: string): void {
+  private _writeString(
+    dataview: DataView,
+    offset: number,
+    header: string
+  ): void {
     for (let i = 0; i < header.length; i++) {
       dataview.setUint8(offset + i, header.charCodeAt(i));
     }
@@ -356,8 +348,14 @@ export default class Crunker {
    * @internal
    */
   private _interleave(input: AudioBuffer): Float32Array {
-    const channels = Array.from({ length: input.numberOfChannels }, (_, i) => i);
-    const length = channels.reduce((prev, channelIdx) => prev + input.getChannelData(channelIdx).length, 0);
+    const channels = Array.from(
+      { length: input.numberOfChannels },
+      (_, i) => i
+    );
+    const length = channels.reduce(
+      (prev, channelIdx) => prev + input.getChannelData(channelIdx).length,
+      0
+    );
     const result = new Float32Array(length);
 
     let index = 0;
@@ -373,28 +371,5 @@ export default class Crunker {
     }
 
     return result;
-  }
-
-  /**
-   * Creates an HTMLAudioElement whose source is the specified Blob.
-   *
-   * @internal
-   */
-  private _renderAudioElement(blob: Blob): HTMLAudioElement {
-    const audio = document.createElement('audio');
-
-    audio.controls = true;
-    audio.src = this._renderURL(blob);
-
-    return audio;
-  }
-
-  /**
-   * Creates an Object URL for the specified Blob.
-   *
-   * @internal
-   */
-  private _renderURL(blob: Blob): string {
-    return (window.URL || window.webkitURL).createObjectURL(blob);
   }
 }

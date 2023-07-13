@@ -1,15 +1,15 @@
-const config = require('./webpack.config.js');
+const config = require("./webpack.config.js");
 
 config.experiments = {
   outputModule: true,
 };
 
 config.output = {
-  path: __dirname + '/dist',
-  filename: 'crunker.esm.js',
+  path: __dirname + "/dist",
+  filename: "crunker.esm.js",
   module: true,
   library: {
-    type: 'module',
+    type: "module",
   },
 };
 
