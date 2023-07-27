@@ -5,7 +5,7 @@ describe("Crunker", () => {
   /** @type {Crunker} */
   let audio;
   /** @type {AudioBuffer[]} */
-  let buffers
+  let buffers;
 
   beforeEach(async () => {
     audio = new Crunker();
@@ -26,7 +26,7 @@ describe("Crunker", () => {
 
   it("should have default sampleRate of 48000", () => {
     expect(audio.context.sampleRate).to.be.eq(48000);
-  })
+  });
 
   it("fetches a single audio file", () => {
     expect(buffers[0]).to.have.property("sampleRate", 48000);
