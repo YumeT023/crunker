@@ -62,9 +62,13 @@ export default class Crunker {
           buffer = await source.arrayBuffer();
         } else {
           buffer = await fetch(source).then((response) => {
-            if (response.headers.has('Content-Type') && !response.headers.get('Content-Type')!.includes('audio/')) {
+            if (
+              response.headers.has("Content-Type") &&
+              !response.headers.get("Content-Type")!.includes("audio/")
+            ) {
               console.warn(
-                `Crunker: Attempted to fetch an audio file, but its MIME type is \`${response.headers.get('Content-Type')!.split(';')[0]
+                `Crunker: Attempted to fetch an audio file, but its MIME type is \`${
+                  response.headers.get("Content-Type")!.split(";")[0]
                 }\`. We'll try and continue anyway. (file: "${source}")`
               );
             }
@@ -340,6 +344,26 @@ export default class Crunker {
     for (let i = 0; i < header.length; i++) {
       dataview.setUint8(offset + i, header.charCodeAt(i));
     }
+  }
+
+  /**
+   * Exports the specified AudioBuffer to a Blob
+   *
+   * Note that changing the MIME type does not change the actual file format. The
+   * file format will **always** be a WAVE file due to how audio is stored in the
+   * browser.
+   *
+   * @param buffer Buffer to export
+   * @param type MIME type (default: `audio/wav`)
+   */
+  export(buffer: AudioBuffer, type: string = "audio/wav") {
+    const recorded = this._interleave(buffer);
+    const dataview = this._writeHeaders(
+      recorded,
+      buffer.numberOfChannels,
+      buffer.sampleRate
+    );
+    return new Blob([dataview], { type });
   }
 
   /**
