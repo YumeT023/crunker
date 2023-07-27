@@ -1,6 +1,6 @@
 {
   "name": "@yumii.saiko/crunker",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "A fork of crunker that is even smaller.",
   "main": "dist/crunker.js",
   "types": "dist/crunker.d.ts",
